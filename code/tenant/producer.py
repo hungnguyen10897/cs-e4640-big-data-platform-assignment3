@@ -2,6 +2,8 @@ import os, json, random, time
 from pathlib import Path
 from kafka import KafkaProducer
 
+TOPIC = "tenant"
+
 # Return file object of the data file
 # skip the first row cotaining column names
 def open_data_file(file_name, data_dir):
@@ -36,7 +38,7 @@ def parse_line(line):
 
 def send_message(parsed_dict, producer):
   product_category = parsed_dict["product_category"]
-  topic = product_category.replace(" ","_").replace("-","_").lower()
+  topic = TOPIC
   msg_key = "event"
   msg_value = json.dumps(parsed_dict)
 
@@ -53,7 +55,7 @@ def send_message(parsed_dict, producer):
 
 if __name__ == "__main__":
 
-  MESSAGE_SPEED = 0 # sec/msg
+  MESSAGE_SPEED = 0.5 # sec/msg
   producer = KafkaProducer(bootstrap_servers='localhost:29092')
 
   data_dir = Path("./data")

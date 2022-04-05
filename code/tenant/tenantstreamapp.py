@@ -1,6 +1,10 @@
+# spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.2 tenantstreamapp.py 
+
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 from pyspark.sql.functions import *
+
+TOPIC = "tenant"
 
 spark = SparkSession \
     .builder \
@@ -27,14 +31,32 @@ schema = StructType([ \
     StructField("review_date", StringType(), True)
   ])
 
-df = spark \
-    .readStream \
-    .schema(schema) \
-    .format("csv") \
-    .option("delimiter", "\t") \
-    .load("./staging")
+# Local Dev
+# df = spark \
+#     .readStream \
+#     .schema(schema) \
+#     .format("csv") \
+#     .option("delimiter", "\t") \
+#     .load("./staging")
 
-df.printSchema()
+rows = spark \
+  .readStream \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "localhost:29092") \
+  .option("subscribe", TOPIC) \
+  .load()
+
+# Turn Kafka Message Values to normal Dataframe
+df = rows \
+  .selectExpr("CAST(value AS STRING)") \
+  .withColumn("jsonData",from_json(col("value"),schema)) \
+    .select("jsonData.*")
+
+# df.writeStream \
+#   .format("console") \
+#   .outputMode("update") \
+#   .start() \
+#   .awaitTermination() 
 
 groupDF = df.select("product_id", "star_rating", "helpful_votes", "total_votes", "review_date") \
         .groupBy("product_id", "review_date") \
@@ -45,8 +67,6 @@ groupDF = df.select("product_id", "star_rating", "helpful_votes", "total_votes",
           count("star_rating").alias("number_of_reviews")
         ) \
         # .where("number_of_reviews > 1")
-
-groupDF.printSchema()
 
 groupDF.writeStream \
   .format("console") \
