@@ -8,6 +8,6 @@ CREATE TABLE aggregated_reviews (
   sum_helpful_votes INT,
   sum_total_votes INT,
   number_of_reviews INT,
-  review_date TEXT,
+  review_date DATE,
   PRIMARY KEY (product_id)
 );

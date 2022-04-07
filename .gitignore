@@ -133,3 +133,5 @@ dmypy.json
 
 .vscode
 **kafka_2.13-3.1.0**
+
+**checkpoint**
