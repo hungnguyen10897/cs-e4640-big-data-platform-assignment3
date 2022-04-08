@@ -35,18 +35,23 @@ schema = StructType([ \
     StructField("review_date", StringType(), True)
   ])
 
-# Local Dev
-df = spark \
-    .readStream \
-    .schema(schema) \
-    .format("csv") \
-    .option("delimiter", "\t") \
-    .load("./staging")
+rows = spark \
+  .readStream \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "localhost:29092") \
+  .option("subscribe", TOPIC) \
+  .load()
+
+# Turn Kafka Message Values to normal Dataframe
+df = rows \
+  .selectExpr("CAST(value AS STRING)") \
+  .withColumn("jsonData",from_json(col("value"),schema)) \
+    .select("jsonData.*")
 
 df = df.withColumn("review_date", to_timestamp("review_date"))
 
 groupDF = df.select("product_id", "star_rating", "helpful_votes", "total_votes", "review_date") \
-        .withWatermark("review_date", "1 day") \
+        .withWatermark("review_date", "2 days") \
         .groupBy(
           "product_id", 
           window("review_date", "1 day")

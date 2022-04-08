@@ -3,6 +3,7 @@ from pathlib import Path
 from kafka import KafkaProducer
 
 TOPIC = "tenant"
+MESSAGE_SPEED = 0.5 # sec/msg
 
 # Return file object of the data file
 # skip the first row cotaining column names
@@ -55,7 +56,6 @@ def send_message(parsed_dict, producer):
 
 if __name__ == "__main__":
 
-  MESSAGE_SPEED = 0.5 # sec/msg
   producer = KafkaProducer(bootstrap_servers='localhost:29092')
 
   data_dir = Path("./data")
